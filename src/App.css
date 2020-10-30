@@ -9,8 +9,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 
 .space-is-pressed {
-  /*cursor: grab;*/
+  cursor: grab;
 }

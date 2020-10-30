@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import "./App.css";
 import { cn } from "./classNames";
 
@@ -12,6 +12,11 @@ const add = (v1: Vector2, v2: Vector2): Vector2 => ({
   y: v1.y + v2.y,
 });
 
+const difference = (v1: Vector2, v2: Vector2): Vector2 => ({
+  x: v1.x - v2.x,
+  y: v1.y - v2.y,
+});
+
 const multiply = (v1: Vector2, val: number): Vector2 => ({
   x: v1.x * val,
   y: v1.y * val,
@@ -22,7 +27,7 @@ class App extends React.Component<any, any> {
     y: window.innerHeight,
     cameraPosition: { x: 0, y: 0 },
     scale: 1,
-    spaceIsPressed: true,
+    spaceIsPressed: false,
   };
 
   isListening = false;
@@ -53,16 +58,27 @@ class App extends React.Component<any, any> {
   };
   onMouseWheel = (event: Event) => {
     const e = event as WheelEvent;
-    const scaleDiff = -e.deltaY / 1000;
-    //regular delta is 100\-100
-    //screenToWorld
-    const mouseOnCanvas = add(
+    //regular delta is 100 or -100, so our step is always 10%
+    // other apps do not do this like that.
+    // They probably scale "scale factor" not always by 10%
+    // Checkout Figma for example
+    const nextScale =
+      this.state.scale + this.state.scale * 0.1 * (-e.deltaY / 100);
+    const mousePosition = this.getMousePosition(e);
+    const currentMouseWorldPosition = add(
       this.state.cameraPosition,
-      multiply(this.getMousePosition(e), scaleDiff)
+      multiply(mousePosition, 1 / this.state.scale)
     );
+    const nextMouseWorldPosition = add(
+      this.state.cameraPosition,
+      multiply(mousePosition, 1 / nextScale)
+    );
+    const diff = difference(currentMouseWorldPosition, nextMouseWorldPosition);
+    const nextCameraPosition = add(this.state.cameraPosition, diff);
+
     this.setState({
-      scale: this.state.scale + scaleDiff,
-      cameraPosition: mouseOnCanvas,
+      scale: nextScale,
+      cameraPosition: nextCameraPosition,
     });
   };
   componentDidMount() {
@@ -90,7 +106,9 @@ class App extends React.Component<any, any> {
         onMouseUp={() => (this.isListening = false)}
         className={cn({ "space-is-pressed": this.state.spaceIsPressed })}
       >
-        <div className="menu">{Math.round(this.state.scale * 100)}%</div>
+        <div className="menu" onClick={() => this.setState({ scale: 1 })}>
+          {Math.round(this.state.scale * 100)}%
+        </div>
         <svg
           viewBox={`${this.state.cameraPosition.x} ${this.state.cameraPosition.y} ${width} ${height}`}
           xmlns="http://www.w3.org/2000/svg"
