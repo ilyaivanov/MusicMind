@@ -1,51 +1,41 @@
 import React from "react";
 import "./App.css";
-import { cn } from "./classNames";
+import * as u from "./utils";
 
-interface Vector2 {
-  x: number;
-  y: number;
+interface State {
+  windowDimensions: u.Vector2;
+  cameraPosition: u.Vector2;
+  scale: number;
+  spaceIsPressed: boolean;
 }
 
-const add = (v1: Vector2, v2: Vector2): Vector2 => ({
-  x: v1.x + v2.x,
-  y: v1.y + v2.y,
-});
-
-const difference = (v1: Vector2, v2: Vector2): Vector2 => ({
-  x: v1.x - v2.x,
-  y: v1.y - v2.y,
-});
-
-const multiply = (v1: Vector2, val: number): Vector2 => ({
-  x: v1.x * val,
-  y: v1.y * val,
-});
-class App extends React.Component<any, any> {
+class App extends React.Component<any, State> {
   state = {
-    x: window.innerWidth,
-    y: window.innerHeight,
-    cameraPosition: { x: 0, y: 0 },
+    windowDimensions: u.vector(window.innerWidth, window.innerHeight),
+    cameraPosition: u.vector(0, 0),
     scale: 1,
     spaceIsPressed: false,
   };
 
   isListening = false;
-  onResize = () => {
-    this.setState({ x: window.innerWidth, y: window.innerHeight });
-  };
 
-  getMousePosition = (e: MouseEvent): Vector2 => ({
-    x: e.clientX,
-    y: e.clientY,
-  });
+  onResize = () =>
+    this.setState({
+      windowDimensions: u.vector(window.innerWidth, window.innerHeight),
+    });
+
+  getMousePosition = (e: MouseEvent): u.Vector2 =>
+    u.vector(e.clientX, e.clientY);
+
   onMouseMove = (e: MouseEvent) => {
     if (this.state.spaceIsPressed && this.isListening && e.buttons == 1) {
-      const shift = {
-        x: -e.movementX / this.state.scale,
-        y: -e.movementY / this.state.scale,
-      };
-      this.setState({ cameraPosition: add(this.state.cameraPosition, shift) });
+      const shift = u.vector(
+        -e.movementX / this.state.scale,
+        -e.movementY / this.state.scale
+      );
+      this.setState({
+        cameraPosition: u.add(this.state.cameraPosition, shift),
+      });
     } else if (!this.isListening && e.buttons === 0) {
       this.isListening = false;
     }
@@ -65,16 +55,19 @@ class App extends React.Component<any, any> {
     const nextScale =
       this.state.scale + this.state.scale * 0.1 * (-e.deltaY / 100);
     const mousePosition = this.getMousePosition(e);
-    const currentMouseWorldPosition = add(
+    const currentMouseWorldPosition = u.add(
       this.state.cameraPosition,
-      multiply(mousePosition, 1 / this.state.scale)
+      u.multiply(mousePosition, 1 / this.state.scale)
     );
-    const nextMouseWorldPosition = add(
+    const nextMouseWorldPosition = u.add(
       this.state.cameraPosition,
-      multiply(mousePosition, 1 / nextScale)
+      u.multiply(mousePosition, 1 / nextScale)
     );
-    const diff = difference(currentMouseWorldPosition, nextMouseWorldPosition);
-    const nextCameraPosition = add(this.state.cameraPosition, diff);
+    const diff = u.difference(
+      currentMouseWorldPosition,
+      nextMouseWorldPosition
+    );
+    const nextCameraPosition = u.add(this.state.cameraPosition, diff);
 
     this.setState({
       scale: nextScale,
@@ -97,20 +90,22 @@ class App extends React.Component<any, any> {
   }
 
   render() {
-    const width = this.state.x / this.state.scale;
-    const height = this.state.y / this.state.scale;
+    const scaledWindowDimensions = u.divide(
+      this.state.windowDimensions,
+      this.state.scale
+    );
 
     return (
       <div
         onMouseDown={() => (this.isListening = true)}
         onMouseUp={() => (this.isListening = false)}
-        className={cn({ "space-is-pressed": this.state.spaceIsPressed })}
+        className={u.cn({ "space-is-pressed": this.state.spaceIsPressed })}
       >
         <div className="menu" onClick={() => this.setState({ scale: 1 })}>
           {Math.round(this.state.scale * 100)}%
         </div>
         <svg
-          viewBox={`${this.state.cameraPosition.x} ${this.state.cameraPosition.y} ${width} ${height}`}
+          viewBox={`${this.state.cameraPosition.x} ${this.state.cameraPosition.y} ${scaledWindowDimensions.x} ${scaledWindowDimensions.y}`}
           xmlns="http://www.w3.org/2000/svg"
         >
           {Array.from(new Array(100)).map((_, i) => (
