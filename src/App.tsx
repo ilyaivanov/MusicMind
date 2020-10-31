@@ -1,12 +1,14 @@
 import React from "react";
 import "./App.css";
 import * as u from "./utils";
+import GoButton from "./GoButton";
 
 interface State {
   windowDimensions: u.Vector2;
   cameraPosition: u.Vector2;
   scale: number;
   spaceIsPressed: boolean;
+  image: string;
 }
 
 class App extends React.Component<any, State> {
@@ -15,6 +17,7 @@ class App extends React.Component<any, State> {
     cameraPosition: u.vector(0, 0),
     scale: 1,
     spaceIsPressed: false,
+    image: "",
   };
 
   isListening = false;
@@ -105,20 +108,30 @@ class App extends React.Component<any, State> {
           {Math.round(this.state.scale * 100)}%
         </div>
         <svg
+          style={{ backgroundColor: "#E9E9E9" }}
           viewBox={`${this.state.cameraPosition.x} ${this.state.cameraPosition.y} ${scaledWindowDimensions.x} ${scaledWindowDimensions.y}`}
           xmlns="http://www.w3.org/2000/svg"
-        >
-          {Array.from(new Array(100)).map((_, i) => (
-            <rect
-              key={i}
-              x={i * 50}
-              y={i * 50}
-              width="50"
-              height="50"
-              fill={i % 2 == 0 ? "red" : "blue"}
+        ><defs>
+          <rect id="rect" x="25%" y="25%" width="50%" height="50%" rx="15"/>
+          <clipPath id="clip">
+            <use xlinkHref="#rect"/>
+          </clipPath>
+        </defs>
+
+          <circle cx="150" cy="150" r="20" style={{ fill: "pink" }} />
+          {this.state.image && (
+            <image
+              x={400}
+              y={50}
+              href={this.state.image}
+              clipPath="url(#clip)"
+              height="180"
+              width="320"
             />
-          ))}
+          )}
         </svg>
+
+        <GoButton onImageFound={(image) => this.setState({ image })} />
       </div>
     );
   }

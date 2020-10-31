@@ -15,3 +15,7 @@
 .space-is-pressed {
   cursor: grab;
 }
+
+image {
+  border-radius: 5px;
+}
